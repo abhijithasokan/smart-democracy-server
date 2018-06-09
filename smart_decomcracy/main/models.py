@@ -48,7 +48,7 @@ class User(models.Model):
 	
 	@classmethod
 	def create(cls,name,voter_id,user_id,password,constituency_name):
-		if cls.isIdAvailable(user_id):
+		if not cls.isIdAvailable(user_id):
 			return None		#if user is already registered
 
 		constituency, _ =  Constituency.objects.get_or_create(constituency_name=constituency_name)
@@ -60,6 +60,7 @@ class User(models.Model):
 			constituency=constituency
 		)
 		x.save()
+		print(x)
 		return x
 
 
@@ -107,3 +108,244 @@ def handle_password(sender, instance, *args, **kwargs):
 
 pre_save.connect(handle_password, sender=MLA)
 pre_save.connect(handle_password, sender=User)
+
+
+
+
+
+#======================================================================================================================
+#======================================================================================================================
+#======================================================================================================================
+
+
+class Issue(models.Model):
+	#keys
+	issue_id = models.AutoField(primary_key=True)
+	creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+	constituency = models.ForeignKey(Constituency, on_delete=models.CASCADE)
+
+	official = models.BooleanField(default=False)
+
+	
+
+	time_created = models.DateTimeField(auto_now_add=True)
+	heading = models.CharField(max_length=100)
+	description = models.CharField(max_length=1000)
+
+	upvotes = models.PositiveIntegerField(default=0)
+	downvotes = models.PositiveIntegerField(default=0)
+
+	resolved = models.BooleanField(default=False)
+
+
+	indexes = [
+		models.Index(fields=['creator',]),
+		models.Index(fields=['constituency',]),
+	]
+
+	@classmethod
+	def create(cls,heading,description,creator):
+		official =  isinstance(creator,MLA)
+		constituency = creator.constituency
+
+		x = cls(
+				heading = heading,
+				description = description,
+				official = official,
+				creator = (None if official else creator),
+				constituency = constituency,
+			)
+		x.save()
+		return x
+
+	@classmethod
+	def getIssues(cls,user):
+		data = []
+		for issue in Issue.objects.filter(constituency=user.constituency,resolved=False).order_by('-upvotes', 'downvotes', '-time_created'):
+			data.append({
+					'heading' : issue.heading,
+					'issue_id' : issue.issue_id,
+					'upvotes' : issue.upvotes,
+					'downvotes' : issue.downvotes,
+				})
+		return data
+
+
+
+	def upvote(self):
+		self.upvotes += 1
+
+	def downvote(self):
+		self.downvotes += 1
+
+
+
+class Solution(models.Model):
+	solution_id = models.AutoField(primary_key=True)
+	issue = models.ForeignKey(Issue,on_delete=models.CASCADE)
+	creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+	official = models.BooleanField(default=False)
+
+
+	time_created = models.DateTimeField(auto_now_add=True)
+	heading = models.CharField(max_length=100)
+	description = models.CharField(max_length=1000)
+
+	upvotes = models.PositiveIntegerField(default=0)
+	downvotes = models.PositiveIntegerField(default=0)
+
+
+
+	@classmethod
+	def create(cls,heading,description,issue,creator):
+		official =  isinstance(creator,MLA)
+
+		x = cls(
+				heading = heading,
+				description = description,
+				official = official,
+				creator = (None if offical else creator),
+				issue = issue,
+			)
+		x.save()
+		return x
+
+
+
+	@classmethod
+	def getSolutions(cls,issue_id):
+		####################
+
+		data = []
+
+		for sol in Solution.objects.filter(issue_id=issue_id).order_by('-upvotes', 'downvotes', '-time_created'):
+			if sol.official:
+				creator = sol.issue.constituency.constituency_mla
+			else:
+				creator = sol.creator
+
+
+			data.append({
+					'upvotes': sol.upvotes,
+					'downvotes' : sol.downvotes,
+					'heading' : sol.heading,
+					'description' : sol.description,
+					'official' : official,
+					'creator' : creator.name,
+					'solution_id' : solution_id,
+				})
+
+		return data
+
+
+
+
+	def upvote(self):
+		self.upvotes += 1
+
+	def downvote(self):
+		self.downvotes += 1
+
+
+
+	
+
+
+
+
+
+# class View_Actions(models.Model):
+# 	pass
+
+
+
+
+'''
+TO DO:
+	BLOCK MULTIPLE UPVOTES
+'''
+
+
+
+
+
+
+
+# =========================================
+# =========================================
+
+
+class Poll(models.Model):
+	poll_id = models.AutoField(primary_key=True)
+	creator = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
+	constituency = models.ForeignKey(Constituency, on_delete=models.CASCADE)
+
+	official = models.BooleanField(default=False)
+
+	
+
+	time_created = models.DateTimeField(auto_now_add=True)
+	heading = models.CharField(max_length=100)
+	description = models.CharField(max_length=1000)
+
+	vote_count =models.PositiveIntegerField(default=0)
+
+	closed = models.BooleanField(default=False)
+
+
+	indexes = [
+		models.Index(fields=['creator',]),
+		models.Index(fields=['constituency',]),
+	]
+
+	@classmethod
+	def create(cls,heading,description,creator,options):
+		official =  isinstance(creator,MLA)
+		constituency = creator.constituency
+
+		x = cls(
+				heading = heading,
+				description = description,
+				official = official,
+				creator = (None if official else creator),
+				constituency = constituency,
+			)
+		
+		x.save()
+
+		start = 1
+		for option in options:
+			Option.objects.create(choice_name=option,poll=x,option_num=start).save()
+			start += 1
+		
+		return x
+
+	@classmethod
+	def getPolls(cls,user):
+		data = []
+		for poll in Poll.objects.filter(constituency=user.constituency,closed=False).order_by('-vote_count', '-time_created'):
+			data.append({
+					'heading' : issue.heading,
+					'poll_id' : issue.issue_id,
+					'responses' : [  (e.choice_name,e.votes/poll.vote_count) for e in Option.objects.filter(poll=poll) ]
+				})
+		return data
+
+	def vote(self,option_num):
+		# PERFORM CHECK
+		self.vote_count += 1
+		
+		p = Option.objects.get(option_num=option_num)
+		p.votes += 1
+		p.save()
+
+
+class Option(models.Model):
+	option_num = models.PositiveIntegerField()
+	choice_name = models.CharField(max_length=30)
+	poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
+	votes = models.PositiveIntegerField(default=0)
+
+	indexes = [
+		models.Index(fields=['poll',]),
+	]

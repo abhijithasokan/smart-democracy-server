@@ -12,7 +12,7 @@ class MapJSONToSession(MiddlewareMixin):
 	def process_request(self, request):
 		if len(request.POST)==0 and len(request.body)!=0:
 			request.is_mobile = True
-			print(request.body)
+			# print(request.body)
 			request.POST = json.loads(request.body)
 			x = request.POST.get('session_id',None)
 			if x:
