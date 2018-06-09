@@ -4,5 +4,6 @@ from .views import check, getSessionId, login
 urlpatterns = [
     path('check', check ),
     path('getSessionId', getSessionId ),
-    path('login', login)
+    path('login', login),
+    path('register', register),
 ]
