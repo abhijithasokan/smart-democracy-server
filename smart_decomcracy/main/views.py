@@ -2,7 +2,7 @@ from django.shortcuts import render
 
 from django.http import JsonResponse
 # Create your views here.
-
+import os
 from .models import User
 
 
@@ -36,3 +36,7 @@ def login(request):
 		request.session.save()
 		res =  JsonResponse({'sessionid': request.session.session_key})
 		return res
+
+
+# def gitHook(request):
+# 	os.system("git pull")
