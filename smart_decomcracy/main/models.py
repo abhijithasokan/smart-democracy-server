@@ -71,6 +71,9 @@ class User(models.Model):
 			return usr_obj
 		return None
 
+	def __str__(self):
+		return '%s | %s'%(self.name,self.constituency)
+
 
 
 
@@ -179,6 +182,10 @@ class Issue(models.Model):
 		self.downvotes += 1
 
 
+	def __str__(self):
+		return '%s | %s'%(self.heading,self.constituency)
+
+
 
 class Solution(models.Model):
 	solution_id = models.AutoField(primary_key=True)
@@ -197,7 +204,7 @@ class Solution(models.Model):
 
 
 	@classmethod
-	def create(cls,heading,description,issue,creator):
+	def create(cls,heading,description,issue_id,creator):
 		official =  isinstance(creator,MLA)
 
 		x = cls(
@@ -205,7 +212,7 @@ class Solution(models.Model):
 				description = description,
 				official = official,
 				creator = (None if offical else creator),
-				issue = issue,
+				issue_id = issue_id,
 			)
 		x.save()
 		return x
@@ -214,8 +221,6 @@ class Solution(models.Model):
 
 	@classmethod
 	def getSolutions(cls,issue_id):
-		####################
-
 		data = []
 
 		for sol in Solution.objects.filter(issue_id=issue_id).order_by('-upvotes', 'downvotes', '-time_created'):
@@ -246,6 +251,9 @@ class Solution(models.Model):
 	def downvote(self):
 		self.downvotes += 1
 
+
+	def __str__(self):
+		return '%s | %s'%(self.issue,self.heading)
 
 
 	
@@ -325,11 +333,15 @@ class Poll(models.Model):
 		data = []
 		for poll in Poll.objects.filter(constituency=user.constituency,closed=False).order_by('-vote_count', '-time_created'):
 			data.append({
-					'heading' : issue.heading,
-					'poll_id' : issue.issue_id,
-					'responses' : [  (e.choice_name,e.votes/poll.vote_count) for e in Option.objects.filter(poll=poll) ]
+					'heading' : poll.heading,
+					'description' : poll.description,
+					'poll_id' : poll.poll_id,
 				})
 		return data
+
+	def getPollResult(self):
+		count = self.vote_count or 1
+		return  [ (e.choice_name,e.votes/count) for e in Option.objects.filter(poll=self) ]
 
 	def vote(self,option_num):
 		# PERFORM CHECK
@@ -338,6 +350,10 @@ class Poll(models.Model):
 		p = Option.objects.get(option_num=option_num)
 		p.votes += 1
 		p.save()
+
+
+	def __str__(self):
+		return '%s'%(self.heading)
 
 
 class Option(models.Model):
@@ -349,3 +365,18 @@ class Option(models.Model):
 	indexes = [
 		models.Index(fields=['poll',]),
 	]
+
+	def __str__(self):
+		return '%s | %s'%(self.poll, self.choice_name)
+
+
+
+
+
+
+
+
+
+
+# class VoteCast(models.Model):
+# 	user_id = 

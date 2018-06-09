@@ -149,6 +149,20 @@ def upvote(request,user):
 		Issue.objects.get(issue_id=id).upvote()
 
 
+
+@isLoggedIn
+def createSolution(request,user):
+	x = Solution.create(heading = request.POST['heading'],
+		description = request.POST['description'],
+		issue_id = request.POST['issue_id'],
+		creator=user
+	)
+	return JsonResponse({
+			'success' : True
+		})
+ 
+
+
 @isLoggedIn
 def getSolutions(request,user):
 	issue_id = request.POST['issue_id']
@@ -206,8 +220,8 @@ def createPoll(request,user):
 	print("createPoll: ",request.POST['option'])
 	options = request.POST['option'].strip()[1:-1].split(', ')
 
-	request.POST['description'] = 'good des'
-	request.POST['heading'] = 'nICE HEADING'
+	# request.POST['description'] = 'good des'
+	# request.POST['heading'] = 'nICE HEADING'
 
 	x = Poll.create(
 		heading = request.POST['heading'],
@@ -221,3 +235,16 @@ def createPoll(request,user):
 		})
 
 
+
+
+@isLoggedIn
+def getPolls(request,user):
+	return JsonResponse({
+			'data' : Poll.getPolls(user),
+		})	
+
+@isLoggedIn
+def getPollResult(request,user):
+	return JsonResponse({
+			'data' : Poll.objects.get(poll_id=request.POST['poll_id']).getPollResult(),
+		})	
