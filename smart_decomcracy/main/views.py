@@ -34,7 +34,10 @@ def login(request):
 	else:
 		request.session['user'] = user.user_id
 		request.session.save()
-		res =  JsonResponse({'sessionid': request.session.session_key})
+		res =  JsonResponse({
+			'sessionid': request.session.session_key,
+			'success' : True,
+			})
 		return res
 
 
