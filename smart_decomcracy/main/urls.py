@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import check, getSessionId, login
+from .views import check, getSessionId, login, register
 
 urlpatterns = [
     path('check', check ),
