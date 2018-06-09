@@ -1,0 +1,4 @@
+[client]
+database = angelHack_db
+user = angelHack_user@localhost
+password = cdr23423
