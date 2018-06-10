@@ -260,12 +260,19 @@ def getSolutions(request,user):
 
 @isLoggedIn
 def vote(request,user):
+	print("Inside vote: ",request.POST)
 	poll_id = request.POST['poll_id']
 	option_num = request.POST['option_id']
 
 	p = Poll.objects.get(poll_id=poll_id)
-	p.vote(option_num)
+	p.vote(user,option_num)
 	p.save()
+
+	return JsonResponse({
+			'data' : int(Poll.objects.get(poll_id=request.POST['poll_id']).getPollResult()[0][1]),
+		})	
+
+
 
 
 @isLoggedIn
@@ -298,9 +305,7 @@ def getPolls(request,user):
 
 @isLoggedIn
 def getPollResult(request,user):
-	return JsonResponse({
-			'data' : Poll.objects.get(poll_id=request.POST['poll_id']).getPollResult(),
-		})	
+	return None
 
 
 

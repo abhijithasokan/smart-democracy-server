@@ -20,7 +20,7 @@ urlpatterns = [
     #path(),
 
     path('createPoll',createPoll), #set
-    path('vote',vote),				
-    path('getPolls',getPolls),
+    path('vote',vote),			#set		
+    path('getPolls',getPolls),	#set
 
 ]

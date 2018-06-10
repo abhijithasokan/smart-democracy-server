@@ -346,22 +346,24 @@ class Poll(models.Model):
 					'heading' : poll.heading,
 					'description' : poll.description,
 					'poll_id' : poll.poll_id,
-					'options' : [ e.choice_name for e in Option.objects.filter(poll=self) ]
-
+					'options' : [ e.option_num for e in Option.objects.filter(poll=poll) ]
 				})
 		return data
 
 	def getPollResult(self):
 		count = self.vote_count or 1
-		return  [ (e.choice_name,e.votes/count) for e in Option.objects.filter(poll=self) ]
+		return  [ (e.option_num,((e.votes/count)*100)) for e in Option.objects.filter(poll=self) ]
 
-	def vote(self,option_num):
-		# PERFORM CHECK
-		self.vote_count += 1
-		
-		p = Option.objects.get(option_num=option_num)
-		p.votes += 1
-		p.save()
+	def vote(self,user,option_num):
+		if VoteCast.isEligible(user,'poll',self.poll_id):
+			self.vote_count += 1
+			
+			p = Option.objects.get(option_num=option_num,poll=self)
+			p.votes += 1
+			p.save()
+			VoteCast.cast(user,'poll',self.poll_id)
+			self.save()
+
 
 
 	def __str__(self):
@@ -373,7 +375,7 @@ class Option(models.Model):
 	choice_name = models.CharField(max_length=30)
 	poll = models.ForeignKey(Poll, on_delete=models.CASCADE)
 	votes = models.PositiveIntegerField(default=0)
-
+ 
 	indexes = [
 		models.Index(fields=['poll',]),
 	]
