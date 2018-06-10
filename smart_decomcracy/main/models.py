@@ -173,13 +173,18 @@ class Issue(models.Model):
 				})
 		return data
 
+	def upvote(self,user):
+		if VoteCast.isEligible(user,'issue',self.issue_id):
+			self.upvotes += 1
+			self.save()
+			VoteCast.cast(user,'issue',self.issue_id)
 
 
-	def upvote(self):
-		self.upvotes += 1
-
-	def downvote(self):
-		self.downvotes += 1
+	def downvote(self,user):
+		if VoteCast.isEligible(user,'issue',self.issue_id):
+			self.downvotes += 1
+			self.save()
+			VoteCast.cast(user,'issue',self.issue_id)
 
 
 	def __str__(self):
@@ -211,7 +216,7 @@ class Solution(models.Model):
 				heading = heading,
 				description = description,
 				official = official,
-				creator = (None if offical else creator),
+				creator = (None if official else creator),
 				issue_id = issue_id,
 			)
 		x.save()
@@ -221,7 +226,24 @@ class Solution(models.Model):
 
 	@classmethod
 	def getSolutions(cls,issue_id):
-		data = []
+		issue = Issue.objects.get(issue_id=issue_id)
+
+		if issue.official:
+			creator = issue.constituency.constituency_mla
+		else:
+			creator = issue.creator
+		
+		data = [ 
+			{
+					'upvotes': issue.upvotes,
+					'downvotes' : issue.downvotes,
+					'heading' : issue.heading,
+					'description' : issue.description,
+					'official' : issue.official,
+					'creator' : creator.name,
+					'solution_id' : issue.issue_id,
+			}
+		]
 
 		for sol in Solution.objects.filter(issue_id=issue_id).order_by('-upvotes', 'downvotes', '-time_created'):
 			if sol.official:
@@ -235,45 +257,33 @@ class Solution(models.Model):
 					'downvotes' : sol.downvotes,
 					'heading' : sol.heading,
 					'description' : sol.description,
-					'official' : official,
+					'official' : sol.official,
 					'creator' : creator.name,
-					'solution_id' : solution_id,
+					'solution_id' : sol.solution_id,
 				})
 
+		print("Data here: ",data)
 		return data
 
 
 
 
-	def upvote(self):
-		self.upvotes += 1
+	def upvote(self,user):
+		if VoteCast.isEligible(user,'solution',self.solution_id):
+			self.upvotes += 1
+			self.save()
+			VoteCast.cast(user,'solution',self.solution_id)
 
-	def downvote(self):
-		self.downvotes += 1
+
+	def downvote(self,user):
+		if VoteCast.isEligible(user,'solution',self.solution_id):
+			self.downvotes += 1
+			self.save()
+			VoteCast.cast(user,'solution',self.solution_id)
 
 
 	def __str__(self):
 		return '%s | %s'%(self.issue,self.heading)
-
-
-	
-
-
-
-
-
-# class View_Actions(models.Model):
-# 	pass
-
-
-
-
-'''
-TO DO:
-	BLOCK MULTIPLE UPVOTES
-'''
-
-
 
 
 
@@ -336,6 +346,8 @@ class Poll(models.Model):
 					'heading' : poll.heading,
 					'description' : poll.description,
 					'poll_id' : poll.poll_id,
+					'options' : [ e.choice_name for e in Option.objects.filter(poll=self) ]
+
 				})
 		return data
 
@@ -371,12 +383,37 @@ class Option(models.Model):
 
 
 
+class VoteCast(models.Model):
+	VOTE_TYPES = ['issue','solution','poll']
+	user_id = models.CharField(max_length=20)
+	official = models.BooleanField(default=False)
+	vote_type = models.PositiveSmallIntegerField()
+	vote_id  = models.PositiveIntegerField()
+
+	indexes = [
+		models.Index(fields=['user_id',]),
+	]
+
+	@classmethod
+	def isEligible(cls,user,vote_type,vote_id):
+		vote_type=VoteCast.VOTE_TYPES.index(vote_type)
+		official = isinstance(user,MLA)
+		return not VoteCast.objects.filter(user_id=user.user_id,
+			official=official,vote_type=vote_type,vote_id=vote_id).exists()
+
+
+
+	@classmethod
+	def cast(cls,user,vote_type,vote_id):
+		vote_type=VoteCast.VOTE_TYPES.index(vote_type)
+		official = isinstance(user,MLA)
+		cls(
+			user_id = user.user_id,
+			official = official,
+			vote_type = vote_type,
+			vote_id = vote_id
+		).save()
 
 
 
 
-
-
-
-# class VoteCast(models.Model):
-# 	user_id = 

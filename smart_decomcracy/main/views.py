@@ -139,14 +139,66 @@ def createIssue(request,user):
 			'success' : True
 		})
 
+
+@isLoggedIn
+def getIssuesPrev(request,user):
+	official = isinstance(user,MLA)
+	
+	if official:
+		res = Issue.objects.filter(official=True,constituency_name=user.constituency)
+	else:
+		res = Issue.objects.filter(creator=user)
+
+	data = []
+	for issue in res.order_by('-upvotes', 'downvotes', '-time_created'):
+		data.append({
+				'heading' : issue.heading,
+				'issue_id' : issue.issue_id,
+				'upvotes' : issue.upvotes,
+				'downvotes' : issue.downvotes,
+			})
+	return JsonResponse({
+			'data' : data,
+		})	
+
+'''
+{
+	'item'  : eg. issue or solution 
+	'id'	:
+}
+'''
 @isLoggedIn
 def upvote(request,user):
 	item = request.POST['item']
 	id = request.POST['id']
+
+	print("upvote: ",request.POST)
+
 	if item == 'issue':
-		Issue.objects.get(issue_id=id).upvote()
+		Issue.objects.get(issue_id=id).upvote(user)
 	elif item == 'solution':
-		Issue.objects.get(issue_id=id).upvote()
+		Solution.objects.get(solution_id=id).upvote(user)
+
+	return JsonResponse({
+			'success' : True
+		})
+ 
+
+@isLoggedIn
+def downvote(request,user):
+	item = request.POST['item']
+	id = request.POST['id']
+
+	print("upvote: ",request.POST)
+
+	if item == 'issue':
+		Issue.objects.get(issue_id=id).downvote(user)
+	elif item == 'solution':
+		Solution.objects.get(solution_id=id).downvote(user)
+
+	return JsonResponse({
+			'success' : True
+		})
 
 
 
@@ -166,8 +218,9 @@ def createSolution(request,user):
 @isLoggedIn
 def getSolutions(request,user):
 	issue_id = request.POST['issue_id']
+	print("In getsolutions: ",request.POST)
 	return JsonResponse({
-			'data' : Solution.getSolutions(issue=issue_id)
+			'data' : Solution.getSolutions(issue_id=issue_id)
 		})
 
 
@@ -247,4 +300,26 @@ def getPolls(request,user):
 def getPollResult(request,user):
 	return JsonResponse({
 			'data' : Poll.objects.get(poll_id=request.POST['poll_id']).getPollResult(),
+		})	
+
+
+
+@isLoggedIn
+def getPollsPrev(request,user):
+	official = isinstance(user,MLA)
+	if official:
+		res = Poll.objects.filter(official=True,constituency_name=user.constituency)
+	else:
+		res = Poll.objects.filter(creator=user)
+
+
+
+	for poll in res.order_by('-vote_count', '-time_created'):
+		data.append({
+				'heading' : poll.heading,
+				'description' : poll.description,
+				'poll_id' : poll.poll_id,
+			})
+	return JsonResponse({
+			'data' : data,
 		})	

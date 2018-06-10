@@ -8,7 +8,6 @@ from django.utils.deprecation import MiddlewareMixin
 import json
 
 class MapJSONToSession(MiddlewareMixin):
-
 	def process_request(self, request):
 		if len(request.POST)==0 and len(request.body)!=0:
 			request.is_mobile = True
