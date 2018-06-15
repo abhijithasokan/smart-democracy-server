@@ -81,20 +81,6 @@ DATABASES = {
     }
 }
 
-# print("ASSSSSSSSSSSSSSS",BASE_DIR)
-
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.mysql',
-#         'NAME': 'angelHack_db',
-#         'USER': 'angelHack_user',
-#         'PASSWORD': 'cdr23423',
-#         'HOST': 'localhost',
-#         'PORT': '5432',
-#     }
-# }
-
-
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators

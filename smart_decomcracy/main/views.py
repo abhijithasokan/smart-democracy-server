@@ -31,18 +31,6 @@ def isLoggedIn(old_view):
 
 
 
-
-def getSessionId(request):
-	request.session['sd']='asd'
-	request.session.save()
-	return JsonResponse({'sessionid': request.session.session_key})
-
-
-
-@isLoggedIn
-def check(request,user):
-	return JsonResponse({'ok': True})
-
 '''
 {
 	'user_id':

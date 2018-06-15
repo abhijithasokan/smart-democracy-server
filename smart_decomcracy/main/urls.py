@@ -1,10 +1,8 @@
 from django.urls import path
-from .views import check, getSessionId, login, register, createIssue, getIssues, createIssue, vote
+from .views import login, register, createIssue, getIssues, createIssue, vote
 from .views import createPoll, getPolls, createSolution, getSolutions, upvote, downvote, getIssuesPrev
 
 urlpatterns = [
-    path('check', check ),
-    path('getSessionId', getSessionId ),
     path('login', login), #set
     path('register', register), #set
     
@@ -13,7 +11,7 @@ urlpatterns = [
 
     path('createIssue', createIssue), #set
     path('getIssues',getIssues), #set
-    path('getIssuesPrevious',getIssuesPrev),		#settttt
+    path('getIssuesPrevious',getIssuesPrev),		#set
 
     path('createSolution',createSolution), #set
     path('getSolutions',getSolutions), #set

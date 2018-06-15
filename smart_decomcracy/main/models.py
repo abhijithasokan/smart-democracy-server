@@ -13,7 +13,6 @@ from django.db.models.signals import pre_save
 
 
 class Constituency(models.Model):
-	models.AutoField(primary_key=True)
 	constituency_name = models.CharField(max_length=30)
 	constituency_mla = models.ForeignKey('MLA',on_delete=models.CASCADE,null=True,related_name='cmla')
 	indexes = [
@@ -89,7 +88,7 @@ class MLA(models.Model):
 		self.old_pass = self.hashed_password
 
 	@classmethod
-	def create(self,name,user_id,password,constituency_name):
+	def create(cls,name,user_id,password,constituency_name):
 		constituency, _ =  Constituency.objects.get_or_create(constituency_name=constituency_name)
 		x = cls(
 				name=name, 
